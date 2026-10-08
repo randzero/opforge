@@ -1,0 +1,44 @@
+name: gpu
+
+# Manual trigger: GPU tests must run on the same architecture as deployment, and
+# GitHub-hosted runners have no GPU. Tag a self-hosted runner with `gpu` and make sure it
+# is set up per tools/gpu_env.sh.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gpu-tests:
+    name: GPU tests + AOT
+    runs-on: [self-hosted, gpu]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Environment
+        run: |
+          # Container gotchas: the real libcuda is not on the default link path; the
+          # ~/.local torch may be broken.
+          echo "LD_PRELOAD=/usr/local/nvidia/lib64/libcuda.so.1" >> "$GITHUB_ENV"
+          echo "PYTHONNOUSERSITE=1" >> "$GITHUB_ENV"
+          nvidia-smi
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,torch,triton,cutedsl]"
+
+      - name: Tests (including Triton / CuTeDSL paths)
+        run: python3 tools/run_tests.py
+
+      - name: Architecture invariants
+        run: python3 tools/check_invariants.py
+
+      - name: AOT precompile
+        run: |
+          export TRITON_CACHE_DIR="$RUNNER_TEMP/triton-cache"
+          mkdir -p "$TRITON_CACHE_DIR"
+          export OPFORGE_CACHE_DIR="$RUNNER_TEMP/opforge-cache"
+          mkdir -p "$OPFORGE_CACHE_DIR"
+          python3 tools/build_aot.py

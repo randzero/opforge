@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opforge"
+version = "0.0.1.dev0"
+description = "Operator/kernel framework: write with JIT, ship with AOT, one kernel for training and inference."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "The opforge Authors" }]
+keywords = [
+  "kernel",
+  "operator",
+  "gpu",
+  "cuda",
+  "triton",
+  "cutedsl",
+  "jit",
+  "aot",
+  "training",
+  "inference",
+]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# L0-L2 (language / kernel / contract / cache / launch layers) have **zero module-level
+# dependencies**: contract resolution, cache fingerprints, and the launch cache all run
+# and test without any framework or GPU.
+# `numpy` is used only by the reference ops shipped with the package (opforge.kernels);
+# the L3 adapter layer additionally needs torch.
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "ruff>=0.5", "numpy>=1.24"]
+torch = ["torch>=2.4"]
+triton = ["triton>=3.0"]
+cutedsl = ["nvidia-cutlass-dsl>=4.3"]
+training = ["torch>=2.4"]
+inference = ["torch>=2.4"]
+all = ["torch>=2.4", "triton>=3.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]

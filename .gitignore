@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Compilation artifacts and caches
+*.so
+*.o
+*.cubin
+*.ptx
+*.ptx.cubin
+opforge-cache/
+.cache/
+
+# Test and check tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Runtime leftovers
+*.log

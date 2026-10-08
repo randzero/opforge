@@ -1,0 +1,49 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: tests + invariants (py${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      # Deliberately do **not** install torch / triton / cutlass: the core layer (L0-L2)
+      # has zero dependencies and GPU-dependent tests auto-skip. This also incidentally
+      # keeps verifying that this design constraint holds.
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Architecture invariants (I1-I9)
+        run: python3 tools/check_invariants.py
+
+      - name: Tests
+        run: python3 tools/run_tests.py
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      # Run only "fatal" rules (syntax errors, undefined names, etc.); style is left to review.
+      - run: ruff check --select E9,F63,F7,F82 src tests tools
